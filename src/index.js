@@ -39,6 +39,7 @@ module.exports = function jsperf({ types: t }) {
     name: 'babel-plugin-jsperf',
     visitor: {
       Function(path) {
+        if (!path.node.loc) return;
         const label = this.file.opts.filename + ':' + (path.node.loc && (path.node.loc.start.line + ':'));
         if (path.isArrowFunctionExpression()) {
           path.arrowFunctionToShadowed()
