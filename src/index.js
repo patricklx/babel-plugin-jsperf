@@ -39,14 +39,11 @@ module.exports = function jsperf({ types: t }) {
     name: 'babel-plugin-jsperf',
     visitor: {
       Function(path) {
-        const comments = path.node && path.node.leadingComments || [];
-        if (!comments.some(c => c.value.includes(PLUGIN_LABEL))) {
-            return;
-        }
+        const label = this.file.opts.filename + ':' + path.node.loc.start.line + ':';
         if (path.isArrowFunctionExpression()) {
           path.arrowFunctionToShadowed()
         }
-        const name = getName(path);
+        const name = label + getName(path);
         path.get('body').unshiftContainer('body', [createTimerStatement(timerCallee, name)]);
         let returnStatement = false;
         path.traverse({
