@@ -27,6 +27,14 @@ module.exports = function jsperf({ types: t }) {
       return path.node.id.name;
     }
 
+    if (path.node.key && path.node.key.name) {
+      return path.node.key.name;
+    }
+
+    if (path.node.type === 'FunctionExpression') {
+      return 'function';
+    }
+
     const variableParent = path.findParent(p => p.isVariableDeclarator())
     if (variableParent && t.isIdentifier(variableParent.node.id)) {
       return variableParent.node.id.name
@@ -35,6 +43,7 @@ module.exports = function jsperf({ types: t }) {
     return 'function';
 }
 
+  let level = 0;
   return {
     name: 'babel-plugin-jsperf',
     visitor: {
@@ -47,9 +56,23 @@ module.exports = function jsperf({ types: t }) {
         const name = label + getName(path);
         path.get('body').unshiftContainer('body', [createTimerStatement(timerCallee, name)]);
         let returnStatement = false;
+
+        let level = 0;
         path.traverse({
+          Function: {
+            enter() {
+              level += 1;
+            },
+            exit() {
+              level -= 1;
+            }
+          },
           ReturnStatement (returnPath) {
-            const id = returnPath.scope.generateUidIdentifier('returnValue')
+            if (returnPath.node.argument && returnPath.node.argument.name && returnPath.node.argument.name.startsWith('_returnValue')) {
+              return;
+            }
+            if (level !== 0) return;
+            const id = returnPath.scope.generateUidIdentifier('returnValue');
             returnPath.insertBefore(
               t.variableDeclaration('var', [
                 t.variableDeclarator(id, returnPath.node.argument)
