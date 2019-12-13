@@ -49,6 +49,7 @@ module.exports = function jsperf({ types: t }) {
     visitor: {
       Function(path) {
         if (!path.node.loc) return;
+        if (path.node.async) return;
         const label = this.file.opts.filename + ':' + (path.node.loc && (path.node.loc.start.line + ':'));
         if (path.isArrowFunctionExpression()) {
           path.arrowFunctionToShadowed()
